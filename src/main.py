@@ -4,7 +4,7 @@ import base64
 import functools
 import json
 import os
-
+import cv2
 import dotenv
 import torch
 import websockets
@@ -12,12 +12,9 @@ from db import get_nickname, register_record
 from predict import detect_objects_and_get_centers, identify_person
 
 dotenv.load_dotenv()
-
-
-hand_coordinate = 550
-# bar_y_coordinate = 470 #バーのy座標
-bar_x_reft = 770  # バーのx座標左
-bar_x_right = 370  # バーのx座標右
+Y_RATIO = float(os.getenv("Y_RATIO"))  # YOLOv5のRATO値
+X_RIGHT_RATIO = float(os.getenv("X_RIGHT_RATIO"))  # YOLOv5のRATO値
+X_REFT_RATIO = float(os.getenv("X_REFT_RATIO"))  # YOLOv5のRATO値
 
 # 画像保存ディレクトリ
 save_path = "received_images"
@@ -32,6 +29,7 @@ async def handler(websocket, model, face_features_path):
     nickname = None
     count = 0
     hand_flg = 1
+    get_size_flg = True
 
     async for message in websocket:
         
@@ -45,6 +43,14 @@ async def handler(websocket, model, face_features_path):
         # ファイルに保存
         with open(file_path, "wb") as f:
             f.write(image_data)
+
+        if get_size_flg:
+            #image_dataのサイズから座標を計算
+            frame = cv2.imread(file_path)
+            hand_coordinate = frame.shape[0] * Y_RATIO
+            bar_x_reft = frame.shape[1] * X_REFT_RATIO
+            bar_x_right = frame.shape[1] * X_RIGHT_RATIO
+            get_size_flg = False
 
         if status == "start":
             name = identify_person(file_path, face_features_path)
