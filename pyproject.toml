@@ -1,5 +1,5 @@
 [project]
-name = "kensuiou-local"
+name = "kensuiou-localserver"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
